@@ -1,0 +1,54 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+\begin{document}
+
+\huge
+\begin{itemize}
+    \item \( l_g \) = length of the airgap
+    \item \( l_c \) = length of the core
+    \item \( A_g \) = Cross-sectional area of the airgap
+    \item \( A_c \) = Cross-sectional area of the core
+\end{itemize}
+
+By using Ampere's law:
+
+\begin{equation}
+    \oint \mathbf{H} \cdot d\mathbf{l} = H_c l_c + H_g l_g = NI \tag{1}
+\end{equation}
+
+
+
+
+
+\begin{equation}
+    B_c A_c = B_g A_g = \Phi_c \tag{2}
+\end{equation}
+
+\vspace{0.5cm} % Optional spacing for better layout
+\begin{equation*}
+   \Huge  {B} = \mu_0 \mu_r {H}
+\end{equation*}
+
+Now, 
+
+\begin{equation}
+    \mu_0 \mu_{rc} H_c A_c = \mu_0 \mu_{rg} H_g A_g = \Phi_c \tag{3}
+\end{equation}
+
+\begin{equation*}
+    H_c = \frac{\Phi_c}{\mu_0\mu_{rc} A_c}, \quad H_g = \frac{\Phi_c}{\mu_0\mu_{rg} A_g}
+\end{equation*}
+
+Now, put \( H_c \) and \( H_g \) values in eq. (1):
+
+\begin{equation}
+    \frac{\Phi_c}{\mu_0 A_c} \left[ \frac{l_c}{\mu_{rc} A_c} + \frac{l_g}{\mu_{rg} A_g} \right] = NI
+\end{equation}
+
+
+
+
+\end{document}
