@@ -1,0 +1,112 @@
+#include "F28x_Project.h"
+
+/* This project is going into the details of the PWM signal
+ * by using almost all the registers and its functions and trying to understand it
+ * No interrupts will be used in this case, jsut to generate the PWM signal across EPWM1
+ * Carrier wave and reference wave signal generation
+ */
+
+// Its better to initialise the function first , (read about it)
+//Function Prototypes
+void InitEPwm();
+
+
+void main(void)
+{
+    //Line 1
+    // First step
+    // initializing system controls and clearing the interrupts
+    InitSysCtrl();
+
+    // Line 2
+    // 2nd step
+    // Initialising the GPIO, and then chosing a certain GPIO as PWM
+    // First Using InitGpio function to initiliase Gpio
+    InitGpio();
+    // Configure GPIO0 as ePWM1A output
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 1);  // GPIO0 as ePWM1A
+    GPIO_SetupPinOptions(0, GPIO_OUTPUT, GPIO_PUSHPULL); // Ensure push-pull output
+    // Alternative command or function is which does all of the above 3rd part
+    //InitEPwm1Gpio();
+
+    // Line 3 
+    // running multiple PWM's
+    EALLOW;
+    CpuSysRegs.PCLKCR0.bit.TBCLKSYNC = 0;
+    EDIS;
+
+    // Line 4 - OPtional But try to explain it
+    // This is the prescale value of the EPWM clock, by default it is 1, so it means
+    // that 200 MHz/2 = 100 MHz
+    EALLOW;
+    ClkCfgRegs.PERCLKDIVSEL.bit.EPWMCLKDIV = 1;
+    EDIS;
+
+    // Line 5
+    // This is to call the EPwm function which we will make down in this programe
+    // try to change the function name to see if it works or not
+    // change it to EPWM1 only and see if it works later
+    InitEPwm();
+
+    // Line 6
+    // Check its explanation within the notes, very important if you are
+    // running multiple PWM's
+    EALLOW;
+    CpuSysRegs.PCLKCR0.bit.TBCLKSYNC = 1;
+    EDIS;
+
+  
+   // Line 7
+    while(1);
+}
+
+// Now this part of the code is to define the EPwm function which we called in the main function as above
+void InitEPwm()
+{
+    //First enable the EPWM clock module, all the epwms have their own clocks and we should initiliase it first
+    // I think it does not require EALLOW and EDIS base on the F28379D Example
+    // Remove it while running the code and see if it works or not
+    EALLOW;
+    CpuSysRegs.PCLKCR2.bit.EPWM1 = 1;    // Enable ePWM1 module clock
+    EDIS;
+
+
+    // 2nd we will define the period of the whole traingular or
+    // saw tooth waveform which we generate
+    // TBPRD is used for it
+    EPwm1Regs.TBPRD = 1000;            // Set period
+
+
+    // 3rd we will play with the Time-base (TB) submodule registers
+    // in this part we will fix the time period of the small steps within the saw tooth
+    // or triangular waveforms
+    //TBCTL is used for it
+    EPwm1Regs.TBCTL.bit.CTRMODE = TB_COUNT_UP;     // Count up mode or 0 for up counter
+    EPwm1Regs.TBCTL.bit.HSPCLKDIV = TB_DIV1;       // High-speed clock divider, can use numbers // Divide by 10 (value 5)
+    EPwm1Regs.TBCTL.bit.CLKDIV = TB_DIV1;          // Clock divider , again can use number like 5 // Divide by 32 (value 5)
+
+
+    // 4th step is to set the counter compare settings
+    // This is to set the duty cycle of the PWM signal
+    // In this case the value defined here (below) will be compared with the TBPRD
+    // to generate the High or low signal
+    EPwm1Regs.CMPA.bit.CMPA = 500;   // 50% duty cycle // This value should not be greater than TBPRD value
+
+    /*
+    //5th step we will create shadow registers and its settings
+    //Check the importance of these registers within the notes
+    EPwm1Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;  // Enable shadow mode for CMPA, can use number like 1 to enable shadow register
+    EPwm1Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // Load CMPB on CTR=Zero
+    */
+
+    // 6th step to setup the action qualifiers registers
+    // Action-qualifier (AQ) submodule registers
+    //check the importance of it in the notes
+    EPwm1Regs.AQCTLA.bit.ZRO = AQ_SET;   // Set output on Zero, can be numbers (0-3)-check in the declaration
+    EPwm1Regs.AQCTLA.bit.CAU = AQ_CLEAR; // Clear output on CMPA match (Up count), can be numbers such 0-3 check in the declaration
+
+
+
+
+
+}

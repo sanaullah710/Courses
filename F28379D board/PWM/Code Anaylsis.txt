@@ -1,0 +1,79 @@
+In the main code - you first go through the 
+InitSysCtrl(); 
+
+Explanation: The InitSysCtrl() function initializes and configures the core system-level peripherals and settings required for the proper operation of the F28379D microcontroller. 
+It ensures that the microcontroller is set up correctly to execute user code efficiently and reliably. More details are within the common commands section
+
+****************************************************************
+
+    InitGpio();
+    // Configure GPIO0 as ePWM1A output
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 1);  // GPIO0 as ePWM1A
+    GPIO_SetupPinOptions(0, GPIO_OUTPUT, GPIO_PUSHPULL); // Ensure push-pull output
+    // Alternative command or function is which does all of the above 3rd part
+    //InitEPwm1Gpio();
+
+Explanation: This part of the code initiates the GPIO0 as ePWM1A. Making that certain pin (I think its Pin 40 to make it as ePWM1A not a GPIO, becasue we can use the same pin as GPIO and ePWM. 
+Explain a bit more about the GPIO_PUSHPULL, Mux and GPIO_SetupPinMux functions. 
+
+**************************************************************************
+
+    EALLOW;
+    CpuSysRegs.PCLKCR0.bit.TBCLKSYNC = 0;
+    EDIS;
+
+Explanation: Disables all the PWM's first. Go the page number incase of the manual. Explain it why it is important if you are running multiple epwms.
+
+
+    EALLOW;
+    ClkCfgRegs.PERCLKDIVSEL.bit.EPWMCLKDIV = 1;
+    EDIS;
+
+optional : This line of code is to make the ePWM frequency the same as the clock frequency of the micrcontroller. You can make it half by using 1 and the same by using 0. See it through the oscilliscope signal.
+
+
+   InitEPwm();
+
+Expanantion : This is to initate or call the EPWM function 
+
+
+    EALLOW;
+    CpuSysRegs.PCLKCR0.bit.TBCLKSYNC = 1;
+    EDIS;
+
+Explanation: This is to enable all the PWM's. So previously we disabled all the pwm clock's and then enables all the PWM clocks. Explain it why it is important if you are running multiple epwms.
+
+*****************************************************************************
+
+Now the PWM main function starts here
+  EALLOW;
+    CpuSysRegs.PCLKCR2.bit.EPWM1 = 1;    // Enable ePWM1 module clock
+    EDIS;
+Explanation: This enables the EPWM1 clock. First enable the EPWM clock module, all the epwms have their own clocks and we should initiliase it first. I think it does not require EALLOW and EDIS base on the F28379D Example
+ Remove it while running the code and see if it works or no
+
+
+EPwm1Regs.TBPRD = 1000;            // Set period
+Explanation: The TBPRD value is put here for the carrier wave. 
+
+
+    EPwm1Regs.TBCTL.bit.CTRMODE = TB_COUNT_UP;     // Count up mode or 0 for up counter
+    EPwm1Regs.TBCTL.bit.HSPCLKDIV = TB_DIV1;       // High-speed clock divider, can use numbers // Divide by 10 (value 5)
+    EPwm1Regs.TBCTL.bit.CLKDIV = TB_DIV1;          // Clock divider , again can use number like 5 // Divide by 32 (value 5)
+
+Explanation: The first line defines if the counter will be up, down or up and down counter.
+2nd and 3rd lines are used to put the HSPCLKDIV and CLKDIV values. Try to go through that why we need two register values, why not only HSPCLKDIV or CLKDIV only?
+all three lines are to for the carrier wave frequency
+
+ EPwm1Regs.CMPA.bit.CMPA = 500;   // 50% duty cycle // This value should not be greater than TBPRD value
+
+Explanation : This is to put the CMPA values to define the value for the reference signal. 
+
+
+
+    // Action-qualifier (AQ) submodule registers
+
+    EPwm1Regs.AQCTLA.bit.ZRO = AQ_SET;   // Set output on Zero, can be numbers (0-3)-check in the declaration
+    EPwm1Regs.AQCTLA.bit.CAU = AQ_CLEAR; // Clear output on CMPA match (Up count), can be numbers such 0-3 check in the declaration
+
+Explanation : I think it is used to see if the resultant square wave will go up or down if the CMPA value becomes greater or lower to the carrier wave value. Do some more research on it.
